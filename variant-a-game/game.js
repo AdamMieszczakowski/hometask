@@ -1,16 +1,10 @@
 /* =======================================================
    1. KONFIGURACJA PODSTAWOWA, CLICKTAG I DOSTĘPNOŚĆ
    ======================================================= */
-// Zgodnie z wytycznymi Rich Media definiujemy standardowy parametr clickTag
 const clickTag = window.clickTag || 'https://example.com/landing';
-
-// Tryb debugowania (?debug=1) rysuje zarysy hitboxów na canvasie
 const isDebug = new URLSearchParams(window.location.search).get('debug') === '1';
-
-// Sprawdzenie preferencji użytkownika dotyczących redukcji animacji
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Obsługa kliknięcia we wszystkie przyciski CTA w nowym oknie
 document.querySelectorAll('.btn-cta').forEach(btn => {
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -19,12 +13,11 @@ document.querySelectorAll('.btn-cta').forEach(btn => {
 });
 
 /* =======================================================
-   2. KONTROLER DŹWIĘKÓW I ZARZĄDZANIE AUDIO
+   2. KONTROLER AUDIO
    ======================================================= */
 let isMuted = false;
 let audioUnlocked = false;
 
-// Inicjalizacja ścieżek audio
 const sounds = {
   bgm: new Audio('assets/music/background_music/Funny Game Loop.mp3'),
   crash: new Audio('assets/music/crash/Cartoon Crash Boing.mp3'),
@@ -33,7 +26,6 @@ const sounds = {
   winCheer: new Audio('assets/music/endcard_win/Celebrative Happy Woohoo Cheer 2.mp3')
 };
 
-// Konfiguracja poziomów głośności oraz zapętlenia muzyki w tle
 sounds.bgm.loop = true;
 sounds.bgm.volume = 0.45;
 sounds.crash.volume = 0.7;
@@ -41,19 +33,15 @@ sounds.fail.volume = 0.65;
 sounds.winApplause.volume = 0.6;
 sounds.winCheer.volume = 0.65;
 
-// Bezpieczne odtwarzanie dźwięków po odblokowaniu przez pierwszą interakcję
 function playSound(audio) {
   if (isMuted || !audioUnlocked) return;
   try {
     audio.currentTime = 0;
     const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(() => {});
-    }
+    if (playPromise !== undefined) playPromise.catch(() => {});
   } catch (err) {}
 }
 
-// Obsługa przycisku wyciszenia (Mute Toggle)
 const muteBtn = document.getElementById('mute-btn');
 const iconSoundOn = document.getElementById('icon-sound-on');
 const iconSoundOff = document.getElementById('icon-sound-off');
@@ -71,7 +59,6 @@ muteBtn.addEventListener('click', (e) => {
   }
 });
 
-// Zatrzymywanie dźwięku i gry przy zmianie karty w przeglądarce (visibilitychange)
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     if (!isMuted) sounds.bgm.pause();
@@ -116,48 +103,43 @@ for (const [key, src] of Object.entries(imageSources)) {
   img.onload = () => {
     loadedImages[key] = img;
     assetsLoadedCount++;
-    if (assetsLoadedCount === totalAssetsToLoad) {
-      initGame();
-    }
+    if (assetsLoadedCount === totalAssetsToLoad) initGame();
   };
   img.onerror = () => {
-    // Awaryjny pusty obiekt w razie błędu ładowania pojedynczego pliku
     loadedImages[key] = new Image();
     assetsLoadedCount++;
-    if (assetsLoadedCount === totalAssetsToLoad) {
-      initGame();
-    }
+    if (assetsLoadedCount === totalAssetsToLoad) initGame();
   };
 }
 
 /* =======================================================
-   4. SILNIK GRY, FIZYKA I SKALOWANIE PŁÓTNA
+   4. SILNIK GRY I FIZYKA
    ======================================================= */
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 const stage = document.getElementById('game-stage');
 
-// Wymiary bazowe zgodne z wytycznymi zadania (360x640 px)
 const V_WIDTH = 360;
 const V_HEIGHT = 640;
 
+const TOP_BOUND = 160;
+const BOTTOM_BOUND = 560;
+
 let scaleFactor = 1;
-let gameState = 'START'; // Dostępne stany: 'START' | 'PLAYING' | 'FAIL' | 'WIN'
+let gameState = 'START';
 let animationFrameId = null;
 
-// Stałe fizyki ruchu postaci
 const GRAVITY = 0.38;
 const JUMP_VELOCITY = -6.8;
 const HORIZONTAL_SPEED = 2.4;
 
-// Parametry gracza (x jest stałe, porusza się tylko w pionie)
 const player = {
   x: 75,
-  y: 280,
-  radius: 20, // Promień kolizji dopasowany tak, by unikać niesprawiedliwych zderzeń
+  y: 310,
+  radius: 17,
   vy: 0,
-  width: 48,
-  height: 48,
+  width: 46,
+  height: 46,
   rotation: 0
 };
 
@@ -165,7 +147,6 @@ let obstacles = [];
 let passedObstaclesCount = 0;
 let gutOffset = 0;
 
-// Responsywne skalowanie płótna z uwzględnieniem gęstości pikseli (DPR)
 function resizeCanvas() {
   const rect = stage.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
@@ -176,29 +157,27 @@ function resizeCanvas() {
 }
 window.addEventListener('resize', resizeCanvas);
 
-// Generowanie listy 15 unikalnych przeszkód (każda pojawia się dokładnie 1 raz na rundę)
 function buildObstaclesList() {
   const items = [
-    { key: 'bac1', yPos: 160 },
-    { key: 'txt1', yPos: 380 },
-    { key: 'bac2', yPos: 140 },
-    { key: 'txt2', yPos: 390 },
-    { key: 'bac3', yPos: 410 },
-    { key: 'txt3', yPos: 150 },
-    { key: 'bac4', yPos: 400 },
-    { key: 'txt4', yPos: 160 },
-    { key: 'bac5', yPos: 240 },
-    { key: 'txt5', yPos: 370 },
-    { key: 'bac6', yPos: 170 },
-    { key: 'txt6', yPos: 380 },
-    { key: 'txt7', yPos: 150 },
-    { key: 'txt8', yPos: 390 },
-    { key: 'txt9', yPos: 250 }
+    { key: 'bac1', yPos: 285 },
+    { key: 'txt1', yPos: 430 },
+    { key: 'bac2', yPos: 275 },
+    { key: 'txt2', yPos: 430 },
+    { key: 'bac3', yPos: 435 },
+    { key: 'txt3', yPos: 270 },
+    { key: 'bac4', yPos: 435 },
+    { key: 'txt4', yPos: 270 },
+    { key: 'bac5', yPos: 275 },
+    { key: 'txt5', yPos: 435 },
+    { key: 'bac6', yPos: 270 },
+    { key: 'txt6', yPos: 430 },
+    { key: 'txt7', yPos: 270 },
+    { key: 'txt8', yPos: 435 },
+    { key: 'txt9', yPos: 275 }
   ];
 
-  // Odstęp startowy 460px daje graczowi chwilę na przygotowanie ("get ready moment")
-  let currentX = 460;
-  const GAP = 260;
+  let currentX = 520;
+  const GAP = 280;
 
   return items.map((item, index) => {
     const obs = {
@@ -219,7 +198,6 @@ function initGame() {
   setupStartScreenAnimations();
 }
 
-// Start nowej rozgrywki
 function startRun() {
   if (!audioUnlocked) audioUnlocked = true;
   if (!isMuted) {
@@ -228,28 +206,26 @@ function startRun() {
   }
 
   gameState = 'PLAYING';
-  player.y = 280;
+  player.y = 310;
   player.vy = 0;
   player.rotation = 0;
   gutOffset = 0;
   passedObstaclesCount = 0;
   obstacles = buildObstaclesList();
 
-  // Ukrycie wszystkich nakładek
   document.getElementById('start-screen').classList.remove('active');
   document.getElementById('fail-screen').classList.remove('active');
   document.getElementById('win-screen').classList.remove('active');
   
   const hud = document.getElementById('hud-score');
   hud.style.opacity = '1';
-  hud.textContent = `Przeszkody: 0 / 15`;
+  hud.textContent = `Hindernisse: 0 / 15`;
 
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
   lastTimestamp = performance.now();
   animationFrameId = requestAnimationFrame(gameLoop);
 }
 
-// Reakcja na tapnięcie gracza (skok)
 function handleTap() {
   if (gameState === 'START') {
     startRun();
@@ -262,19 +238,17 @@ function handleTap() {
 }
 
 stage.addEventListener('pointerdown', (e) => {
-  // Ignorujemy tapnięcia w przyciski funkcyjne
   if (e.target.closest('.mute-btn') || e.target.closest('.btn-cta') || e.target.closest('.btn-replay')) return;
   handleTap();
 });
 
-// Przycisk restartu po przegranej
 document.getElementById('btn-replay').addEventListener('click', (e) => {
   e.stopPropagation();
   startRun();
 });
 
 /* =======================================================
-   5. GŁÓWNA PĘTLA ROZGRYWKI (PHYSICS & RENDER)
+   5. PĘTLA RENDEROWANIA I DETEKCJA KOLIZJI
    ======================================================= */
 let lastTimestamp = 0;
 
@@ -284,7 +258,6 @@ function gameLoop(timestamp) {
   const dt = Math.min((timestamp - lastTimestamp) / 16.66, 2.5);
   lastTimestamp = timestamp;
 
-  // 1. Aktualizacja fizyki gracza
   player.vy += GRAVITY * dt;
   player.y += player.vy * dt;
   
@@ -292,40 +265,32 @@ function gameLoop(timestamp) {
     player.rotation = Math.min(player.rotation + 0.02 * dt, 0.45);
   }
 
-  // 2. Granice planszy (górna i dolna ścianka jelita)
-  const TOP_BOUND = 85;
-  const BOTTOM_BOUND = 555;
-
   if (player.y - player.radius <= TOP_BOUND || player.y + player.radius >= BOTTOM_BOUND) {
     triggerGameOver(false);
     return;
   }
 
-  // 3. Przesuwanie tła jelita i przeszkód
-  gutOffset = (gutOffset + HORIZONTAL_SPEED * dt) % V_WIDTH;
+  gutOffset = gutOffset + HORIZONTAL_SPEED * dt;
   let allPassed = true;
 
   for (let i = 0; i < obstacles.length; i++) {
     const obs = obstacles[i];
     obs.x -= HORIZONTAL_SPEED * dt;
 
-    // Aktualizacja wyniku po minięciu przeszkody
     if (!obs.passed && obs.x + 30 < player.x) {
       obs.passed = true;
       passedObstaclesCount++;
-      document.getElementById('hud-score').textContent = `Przeszkody: ${passedObstaclesCount} / 15`;
+      document.getElementById('hud-score').textContent = `Hindernisse: ${passedObstaclesCount} / 15`;
     }
 
     if (!obs.passed) allPassed = false;
 
-    // Sprawdzenie kolizji ze strefą bezpieczeństwa
     if (checkCollision(player, obs)) {
       triggerGameOver(false);
       return;
     }
   }
 
-  // Warunek wygranej: minięcie wszystkich 15 przeszkód
   if (allPassed && obstacles[obstacles.length - 1].x < -120) {
     triggerGameOver(true);
     return;
@@ -335,18 +300,20 @@ function gameLoop(timestamp) {
   animationFrameId = requestAnimationFrame(gameLoop);
 }
 
-// Wykrywanie kolizji ze zmniejszonym wewnętrznym obrysem (zapobiega przypadkowym uderzeniom)
 function checkCollision(p, obs) {
   if (!obs.img) return false;
-  const w = (obs.img.naturalWidth || 80) * 0.45;
-  const h = (obs.img.naturalHeight || 80) * 0.45;
+  
+  const isText = obs.key.startsWith('txt');
+  const scale = isText ? 0.38 : 0.45;
+  const w = (obs.img.naturalWidth || 80) * scale;
+  const h = (obs.img.naturalHeight || 80) * scale;
   
   const obsX = obs.x - w / 2;
   const obsY = obs.y - h / 2;
 
-  // Bezpieczny margines 14% z każdej strony
-  const marginX = w * 0.14;
-  const marginY = h * 0.14;
+  const marginX = isText ? w * 0.25 : w * 0.15;
+  const marginY = isText ? h * 0.20 : h * 0.15;
+
   const boxLeft = obsX + marginX;
   const boxRight = obsX + w - marginX;
   const boxTop = obsY + marginY;
@@ -359,38 +326,81 @@ function checkCollision(p, obs) {
   const distY = p.y - closestY;
   const distSq = (distX * distX) + (distY * distY);
 
-  return distSq < (p.radius * p.radius * 0.85);
+  return distSq < (p.radius * p.radius * 0.80);
 }
 
-// Rysowanie klatki na canvasie
 function renderScene() {
   ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
 
-  // Płynne przewijanie tła jelita
-  if (loadedImages.gameplayGut) {
-    const gutImg = loadedImages.gameplayGut;
-    ctx.drawImage(gutImg, -gutOffset, 0, V_WIDTH, V_HEIGHT);
-    ctx.drawImage(gutImg, -gutOffset + V_WIDTH, 0, V_WIDTH, V_HEIGHT);
+  // 1. Tło z mikroelementami (bg_texture.png)
+  if (loadedImages.bgTexture) {
+    const bg = loadedImages.bgTexture;
+    const bgScale = 0.55;
+    const bgW = (bg.naturalWidth || 360) * bgScale;
+    const bgH = (bg.naturalHeight || 640) * bgScale;
+    const bgOffset = (gutOffset * 0.3) % bgW;
+    ctx.globalAlpha = 0.22;
+    for (let x = -bgOffset; x < V_WIDTH + bgW; x += bgW) {
+      ctx.drawImage(bg, x, 120, bgW, bgH);
+    }
+    ctx.globalAlpha = 1.0;
   }
 
-  // Rysowanie przeszkód
+  // 2. Korytarz jelita (gameplay.png) z wycięciem mikromarginesu (eliminuje czarną kreskę)
+  if (loadedImages.gameplayGut) {
+    const gutImg = loadedImages.gameplayGut;
+    const nw = gutImg.naturalWidth || 720;
+    const nh = gutImg.naturalHeight || 380;
+    
+    const cropX = 2; // Odcięcie 2px z lewej i prawej strony
+    const sWidth = nw - cropX * 2;
+    const aspect = sWidth / nh;
+
+    const gutH = 448; 
+    const gutW = gutH * aspect;
+    const gutY = 130; 
+
+    const startIdx = Math.floor((gutOffset - 100) / gutW);
+    const endIdx = startIdx + Math.ceil(V_WIDTH / gutW) + 2;
+
+    for (let i = startIdx; i <= endIdx; i++) {
+      const drawX = i * gutW - gutOffset;
+      const isMirrored = Math.abs(i % 2) === 1;
+
+      ctx.save();
+      if (isMirrored) {
+        ctx.translate(drawX + gutW, gutY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(gutImg, cropX, 0, sWidth, nh, 0, 0, gutW, gutH);
+      } else {
+        ctx.drawImage(gutImg, cropX, 0, sWidth, nh, drawX, gutY, gutW, gutH);
+      }
+      ctx.restore();
+    }
+  }
+
+  // 3. Przeszkody
   for (const obs of obstacles) {
     if (obs.x < -150 || obs.x > V_WIDTH + 150) continue;
     if (obs.img) {
-      const w = (obs.img.naturalWidth || 80) * 0.45;
-      const h = (obs.img.naturalHeight || 80) * 0.45;
+      const isText = obs.key.startsWith('txt');
+      const scale = isText ? 0.38 : 0.45;
+      const w = (obs.img.naturalWidth || 80) * scale;
+      const h = (obs.img.naturalHeight || 80) * scale;
+      
       ctx.drawImage(obs.img, obs.x - w / 2, obs.y - h / 2, w, h);
 
-      // Opcjonalne rysowanie hitboxów w trybie ?debug=1
       if (isDebug) {
         ctx.strokeStyle = '#ffff00';
         ctx.lineWidth = 1.5;
-        ctx.strokeRect(obs.x - w * 0.36, obs.y - h * 0.36, w * 0.72, h * 0.72);
+        const marginX = isText ? w * 0.25 : w * 0.15;
+        const marginY = isText ? h * 0.20 : h * 0.15;
+        ctx.strokeRect(obs.x - w / 2 + marginX, obs.y - h / 2 + marginY, w - marginX * 2, h - marginY * 2);
       }
     }
   }
 
-  // Rysowanie postaci gracza
+  // 4. Postać gracza
   if (loadedImages.player) {
     ctx.save();
     ctx.translate(player.x, player.y);
@@ -408,10 +418,21 @@ function renderScene() {
     }
     ctx.restore();
   }
+
+  if (isDebug) {
+    ctx.strokeStyle = '#ff0055';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, TOP_BOUND);
+    ctx.lineTo(V_WIDTH, TOP_BOUND);
+    ctx.moveTo(0, BOTTOM_BOUND);
+    ctx.lineTo(V_WIDTH, BOTTOM_BOUND);
+    ctx.stroke();
+  }
 }
 
 /* =======================================================
-   6. OBSŁUGA KOŃCA GRY (FAIL / WIN) I ANIMACJE GSAP
+   6. OBSŁUGA EKRANÓW KOŃCOWYCH
    ======================================================= */
 function triggerGameOver(isWin) {
   gameState = isWin ? 'WIN' : 'FAIL';
@@ -430,7 +451,6 @@ function triggerGameOver(isWin) {
   }
 }
 
-// Wyświetlenie karty przegranej
 function showFailEndcard() {
   const screen = document.getElementById('fail-screen');
   screen.classList.add('active');
@@ -438,10 +458,10 @@ function showFailEndcard() {
   if (prefersReducedMotion) return;
 
   gsap.fromTo('#fail-avatar', 
-    { y: -30, opacity: 0, scale: 0.8 }, 
+    { y: -25, opacity: 0, scale: 0.8 }, 
     { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.7)" }
   );
-  gsap.fromTo('#fail-screen .endcard-headline', 
+  gsap.fromTo('#fail-screen .endcard-headline-img', 
     { opacity: 0, y: 15 }, 
     { opacity: 1, y: 0, duration: 0.5, delay: 0.2, ease: "power2.out" }
   );
@@ -455,7 +475,6 @@ function showFailEndcard() {
   );
 }
 
-// Wyświetlenie karty wygranej
 function showWinEndcard() {
   const screen = document.getElementById('win-screen');
   screen.classList.add('active');
@@ -463,14 +482,14 @@ function showWinEndcard() {
   if (prefersReducedMotion) return;
 
   gsap.fromTo('#win-confetti', 
-    { opacity: 0, scale: 1.15 }, 
+    { opacity: 0, scale: 1.1 }, 
     { opacity: 1, scale: 1, duration: 0.8, ease: "power2.out" }
   );
   gsap.fromTo('#win-avatar', 
     { scale: 0, rotation: -20 }, 
     { scale: 1, rotation: 0, duration: 0.7, ease: "elastic.out(1, 0.6)" }
   );
-  gsap.fromTo('#win-screen .endcard-headline', 
+  gsap.fromTo('#win-screen .endcard-headline-img', 
     { opacity: 0, y: 15 }, 
     { opacity: 1, y: 0, duration: 0.5, delay: 0.25, ease: "power2.out" }
   );
@@ -479,7 +498,6 @@ function showWinEndcard() {
     { scale: 1, opacity: 1, duration: 0.5, delay: 0.4, ease: "back.out(1.8)" }
   );
 
-  // Delikatne pulsowanie przycisku CTA po wygranej
   gsap.to('#win-cta', {
     scale: 1.04,
     duration: 0.8,
@@ -490,7 +508,6 @@ function showWinEndcard() {
   });
 }
 
-// Animacja podskakiwania dłoni na ekranie powitalnym
 function setupStartScreenAnimations() {
   if (prefersReducedMotion) return;
 

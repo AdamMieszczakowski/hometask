@@ -10,68 +10,70 @@
 <body>
 
   <div id="game-stage">
-    <!-- Top UI Bar: Logo and Mute button -->
-    <header class="top-bar">
-      <img src="assets/logo.png" alt="Logo" class="top-logo">
-      <button id="mute-btn" class="mute-btn" aria-label="Toggle Sound">
-        <svg id="icon-sound-on" viewBox="0 0 24 24">
-          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-        </svg>
-        <svg id="icon-sound-off" viewBox="0 0 24 24" style="display: none;">
-          <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27l4.73 4.73H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-        </svg>
-      </button>
-    </header>
+    <!-- Przycisk wyciszenia dźwięku -->
+    <button id="mute-btn" class="mute-btn" aria-label="Ton umschalten">
+      <svg id="icon-sound-on" viewBox="0 0 24 24">
+        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+      </svg>
+      <svg id="icon-sound-off" viewBox="0 0 24 24" style="display: none;">
+        <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27l4.73 4.73H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+      </svg>
+    </button>
 
-    <div class="hud-score" id="hud-score">Obstacles: 0 / 15</div>
+    <!-- Licznik przeszkód -->
+    <div class="hud-score" id="hud-score">Hindernisse: 0 / 15</div>
 
-    <!-- Decorative gut border layer -->
-    <div class="gut-border"></div>
-
-    <!-- 60fps Game Canvas -->
+    <!-- Płótno Canvas z grą -->
     <canvas id="game-canvas"></canvas>
 
-    <!-- Screen 1: Start Screen Overlay -->
+    <!-- Falbany jelita (border.png) -->
+    <img src="assets/border.png" class="gut-border-layer" alt="">
+
+    <!-- Pełnoekranowa warstwa Logo (logo.png) -->
+    <img src="assets/logo.png" class="logo-screen-layer" alt="Logo">
+
+<!-- EKRAN STARTOWY (01-start.png) -->
     <div id="start-screen" class="screen-overlay active">
-      <div class="start-tut-box">
-        <img src="assets/01_game/tut.png" alt="Tutorial" class="start-tut-img">
-        <img src="assets/gesture.png" alt="Tap" class="hand-gesture" id="start-gesture">
-        <div class="tap-hint">Tap to run</div>
+      <div class="start-header-text">
+        <h2>Bringe Poo durch<br><span>den Darm ans Ziel.</span></h2>
+      </div>
+      <div class="start-tut-interactive">
+        <img src="assets/gesture.png" alt="Tab to run" class="hand-gesture" id="start-gesture">
       </div>
     </div>
 
-    <!-- Screen 2: Fail Endcard Overlay -->
+    <!-- EKRAN PRZEGRANEJ (02-fail-endcard.png) -->
     <div id="fail-screen" class="screen-overlay endcard">
-      <div class="bubble-wrapper">
-        <img src="assets/02_endcard/fail/bubble.png" class="bubble-bg" alt="">
-        <div class="endcard-content">
-          <img src="assets/02_endcard/fail/sad.png" alt="Sad character" class="endcard-avatar" id="fail-avatar">
-          <img src="assets/02_endcard/fail/hl.png" alt="Headline" class="endcard-headline">
-          <div class="endcard-actions">
-            <a href="javascript:void(0)" class="btn-cta" id="fail-cta">
-              <img src="assets/02_endcard/fail/cta.png" alt="Jetzt informieren">
-            </a>
-            <div class="btn-replay" id="btn-replay">
-              <img src="assets/02_endcard/fail/replay.png" alt="Nochmal spielen">
-            </div>
+      <div class="endcard-visual-area">
+        <img src="assets/02_endcard/fail/bubble.png" class="bubble-illustration" alt="">
+        <img src="assets/02_endcard/fail/sad.png" alt="Sad" class="character-avatar" id="fail-avatar">
+      </div>
+      <div class="endcard-text-area">
+        <img src="assets/02_endcard/fail/hl.png" alt="Poo, das tat weh!" class="endcard-headline-img">
+        <div class="endcard-actions">
+          <a href="javascript:void(0)" class="btn-cta" id="fail-cta">
+            <img src="assets/02_endcard/fail/cta.png" alt="Jetzt informieren!">
+          </a>
+          <div class="btn-replay" id="btn-replay">
+            <img src="assets/02_endcard/fail/replay.png" alt="Nochmal spielen">
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Screen 3: Win Endcard Overlay -->
+    <!-- EKRAN WYGRANEJ (03-win-endcard.png) -->
     <div id="win-screen" class="screen-overlay endcard">
-      <img src="assets/02_endcard/win/konfetti.png" class="confetti-layer" id="win-confetti" alt="">
-      <div class="bubble-wrapper">
-        <img src="assets/02_endcard/win/bubble.png" class="bubble-bg" alt="">
-        <div class="endcard-content">
-          <img src="assets/02_endcard/win/happy.png" alt="Happy character" class="endcard-avatar" id="win-avatar">
-          <img src="assets/02_endcard/win/hl.png" alt="Headline" class="endcard-headline">
-          <div class="endcard-actions">
-            <a href="javascript:void(0)" class="btn-cta" id="win-cta">
-              <img src="assets/02_endcard/win/cta.png" alt="Jetzt mehr erfahren">
-            </a>
-          </div>
+      <div class="endcard-visual-area">
+        <img src="assets/02_endcard/win/bubble.png" class="bubble-illustration" alt="">
+        <img src="assets/02_endcard/win/konfetti.png" class="confetti-illustration" id="win-confetti" alt="">
+        <img src="assets/02_endcard/win/happy.png" alt="Happy" class="character-avatar" id="win-avatar">
+      </div>
+      <div class="endcard-text-area">
+        <img src="assets/02_endcard/win/hl.png" alt="Poo, tut das gut!" class="endcard-headline-img">
+        <div class="endcard-actions">
+          <a href="javascript:void(0)" class="btn-cta" id="win-cta">
+            <img src="assets/02_endcard/win/cta.png" alt="Jetzt mehr erfahren">
+          </a>
         </div>
       </div>
     </div>
