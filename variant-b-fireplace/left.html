@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Left Skyscraper (320x975)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 320px;
+      height: 975px;
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+      background: transparent;
+    }
+
+    .ad-container {
+      position: relative;
+      width: 320px;
+      height: 975px;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* 1. Tło ze skałą, mchem i opakowaniem produktu */
+    .bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 320px;
+      height: 975px;
+      background: url('assets/left/bg.jpg') no-repeat top left;
+      background-size: 320px 975px;
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    /* 2. Przezroczyste logo u góry */
+    .logo-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 320px;
+      height: 975px;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    .logo-layer img {
+      width: 320px;
+      height: 975px;
+      display: block;
+    }
+
+    /* 3. Panel tekstowy na dole (wymiary 265x70) */
+    .info-box-wrap {
+      position: absolute;
+      bottom: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 265px;
+      height: 70px;
+      background-color: #176579; /* Morski odcień dopasowany do makiety */
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    .box-text {
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.25;
+      text-align: center;
+      letter-spacing: -0.2px;
+    }
+
+    /* 4. Przycisk CTA */
+    .cta-btn {
+      position: absolute;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 220px;
+      height: auto;
+      pointer-events: none;
+      will-change: transform;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+
+  <div class="ad-container" id="ad">
+    <div class="bg" id="bg"></div>
+
+    <div class="logo-layer" id="logo">
+      <img src="assets/left/logo.png" alt="Logo">
+    </div>
+
+    <div class="info-box-wrap" id="box">
+      <div class="box-text">
+        Beruhigt effektiv bei trockenem Reizhusten.
+      </div>
+    </div>
+
+    <img src="assets/cta.png" alt="Jetzt entdecken" class="cta-btn" id="cta">
+  </div>
+
+  <script>
+    const clickTag = window.clickTag || 'https://example.com/landing';
+    const adContainer = document.getElementById('ad');
+
+    adContainer.addEventListener('click', () => {
+      window.open(clickTag, '_blank');
+    });
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function buildTimeline() {
+      const tl = gsap.timeline({ paused: true });
+
+      if (prefersReducedMotion) {
+        gsap.set(['#bg', '#logo', '#box', '#cta'], { opacity: 1, scale: 1, y: 0 });
+        return tl;
+      }
+
+      // Intro
+      tl.fromTo('#bg',
+        { scale: 1.05, opacity: 0.8 },
+        { scale: 1.0, opacity: 1, duration: 2.2, ease: 'power2.out' }
+      )
+      .fromTo('#logo',
+        { opacity: 0, y: -15 },
+        { opacity: 1, y: 0, duration: 1.0, ease: 'power2.out' },
+        '-=1.8'
+      )
+      .fromTo('#box',
+        { opacity: 0, y: 25 },
+        { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out' },
+        '-=1.2'
+      )
+      .fromTo('#cta',
+        { opacity: 0, scale: 0.88 },
+        { opacity: 1, scale: 1, duration: 0.9, ease: 'back.out(1.7)' },
+        '-=0.7'
+      )
+      // Pętla do 30 sekund
+      .to('#cta', {
+        scale: 1.04,
+        duration: 1.5,
+        repeat: 9,
+        yoyo: true,
+        ease: 'sine.inOut'
+      }, 'loop')
+      .to('#bg', {
+        scale: 1.02,
+        duration: 14,
+        repeat: 1,
+        yoyo: true,
+        ease: 'sine.inOut'
+      }, 'loop');
+
+      adContainer.addEventListener('mouseenter', () => {
+        gsap.to('#cta', { scale: 1.05, duration: 0.2, ease: 'power1.out' });
+      });
+      adContainer.addEventListener('mouseleave', () => {
+        gsap.to('#cta', { scale: 1.0, duration: 0.2, ease: 'power1.out' });
+      });
+
+      return tl;
+    }
+
+    const mainTimeline = buildTimeline();
+
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.action === 'START_ANIMATION') {
+        mainTimeline.restart();
+      }
+    });
+
+    if (window.self === window.top) {
+      mainTimeline.play();
+    }
+  </script>
+</body>
+</html>
