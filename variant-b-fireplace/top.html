@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top Banner (1032x250)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 1032px;
+      height: 250px;
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .ad-container {
+      position: relative;
+      width: 1032px;
+      height: 250px;
+      overflow: hidden;
+      background-color: #0b1411;
+    }
+
+    /* Wykadrowane tło mchu */
+    .bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1032px;
+      height: 250px;
+      background: url('assets/top/bg.jpg') no-repeat center top;
+      background-size: 1032px 250px;
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    /* Hasło reklamowe hl.png (przeskalowane z 2x do 50%) */
+    .headline {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      height: auto;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+
+  <div class="ad-container" id="ad">
+    <div class="bg" id="bg"></div>
+    <img src="assets/top/hl.png" alt="Headline" class="headline" id="hl">
+  </div>
+
+  <script>
+    // Standardowa obsługa clickTag
+    const clickTag = window.clickTag || 'https://example.com/landing';
+    document.getElementById('ad').addEventListener('click', () => {
+      window.open(clickTag, '_blank');
+    });
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function buildTimeline() {
+      const tl = gsap.timeline({ paused: true });
+
+      if (prefersReducedMotion) {
+        gsap.set(['#bg', '#hl'], { opacity: 1, scale: 1 });
+        return tl;
+      }
+
+      // Intro animacji (2.5s)
+      tl.fromTo('#bg', 
+        { scale: 1.08, opacity: 0.8 }, 
+        { scale: 1.0, opacity: 1, duration: 2.5, ease: 'power2.out' }
+      )
+      .fromTo('#hl',
+        { opacity: 0, y: 15, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 1.8, ease: 'power3.out' },
+        '-=1.5'
+      )
+      // Dyskretny, powolny ruch tła mieszczący się w limicie 30 sekund
+      .to('#bg', {
+        scale: 1.03,
+        duration: 15,
+        repeat: 1,
+        yoyo: true,
+        ease: 'sine.inOut'
+      });
+
+      return tl;
+    }
+
+    const mainTimeline = buildTimeline();
+
+    // Reakcja na sygnał synchronizacji z preview.html
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.action === 'START_ANIMATION') {
+        mainTimeline.restart();
+      }
+    });
+
+    // Start w przypadku otwarcia pliku bezpośrednio
+    if (window.self === window.top) {
+      mainTimeline.play();
+    }
+  </script>
+</body>
+</html>

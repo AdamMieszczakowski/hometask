@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fireplace Ad - Preview</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #0b1411;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-top: 20px;
+    }
+
+    /* Główny kontener kominka: lewy (320px) + portal (1032px) + prawy (320px) = 1672px */
+    .fireplace-container {
+      position: relative;
+      width: 1672px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .ad-frame {
+      border: none;
+      display: block;
+      overflow: hidden;
+    }
+
+    .frame-top {
+      width: 1032px;
+      height: 250px;
+    }
+
+    .main-stage {
+      display: flex;
+      width: 100%;
+      height: 975px;
+    }
+
+    .frame-skyscraper {
+      width: 320px;
+      height: 975px;
+    }
+
+    /* Makieta portalu wydawcy */
+    .publisher-content {
+      width: 1032px;
+      height: 975px;
+      background: #ffffff;
+      padding: 40px;
+      color: #333;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .mock-header {
+      height: 60px;
+      background: #e2e8f0;
+      border-radius: 6px;
+    }
+
+    .mock-banner {
+      height: 200px;
+      background: #cbd5e1;
+      border-radius: 6px;
+    }
+
+    .mock-article {
+      flex: 1;
+      background: #f1f5f9;
+      border-radius: 6px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="fireplace-container">
+    <!-- Top banner -->
+    <iframe id="frame-top" class="ad-frame frame-top" src="top.html"></iframe>
+
+    <div class="main-stage">
+      <!-- Left skyscraper -->
+      <iframe id="frame-left" class="ad-frame frame-skyscraper" src="left.html"></iframe>
+
+      <!-- Portal wydawcy -->
+      <div class="publisher-content">
+        <div class="mock-header"></div>
+        <div class="mock-banner"></div>
+        <div class="mock-article">
+          <h2>Przykładowy portal wydawcy</h2>
+          <p style="margin-top: 10px; color: #64748b;">
+            Obszar symulujący artykuł prasowy wewnątrz kominka reklamowego.
+          </p>
+        </div>
+      </div>
+
+      <!-- Right skyscraper -->
+      <iframe id="frame-right" class="ad-frame frame-skyscraper" src="right.html"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Automatyczna synchronizacja animacji ramek
+    function syncAllAds() {
+      const frames = ['frame-top', 'frame-left', 'frame-right'];
+      frames.forEach(id => {
+        const frame = document.getElementById(id);
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage({ action: 'START_ANIMATION' }, '*');
+        }
+      });
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(syncAllAds, 300);
+    });
+  </script>
+</body>
+</html>
