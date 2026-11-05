@@ -27,7 +27,6 @@
       background-color: #0b1411;
     }
 
-    /* Wykadrowane tło mchu */
     .bg {
       position: absolute;
       top: 0;
@@ -35,22 +34,58 @@
       width: 1032px;
       height: 250px;
       background: url('assets/top/bg.jpg') no-repeat center top;
-      background-size: 1032px 250px;
+      background-size: cover;
       transform-origin: center center;
       will-change: transform;
     }
 
-    /* Hasło reklamowe hl.png (przeskalowane z 2x do 50%) */
-    .headline {
+    /* Kontener wyśrodkowany na banerze (500px szerokości = 50% z 1000px) */
+    .headline-wrapper {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       width: 500px;
-      height: auto;
+      height: 114px;
       pointer-events: none;
+    }
+
+    /* Maski dla poszczególnych linii hasła */
+    .line-mask {
+      position: absolute;
+      left: 0;
+      width: 500px;
+      overflow: hidden;
       will-change: transform, opacity;
     }
+
+    .line-1 {
+      top: 0;
+      height: 38px;
+    }
+
+    .line-2 {
+      top: 38px;
+      height: 38px;
+    }
+
+    .line-3 {
+      top: 76px;
+      height: 38px;
+    }
+
+    /* Obrazek bazowy przesunięty w górę wewnątrz masek */
+    .line-mask img {
+      position: absolute;
+      left: 0;
+      width: 500px;
+      height: auto;
+      display: block;
+    }
+
+    .line-1 img { top: 0; }
+    .line-2 img { top: -38px; }
+    .line-3 img { top: -76px; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
@@ -58,11 +93,21 @@
 
   <div class="ad-container" id="ad">
     <div class="bg" id="bg"></div>
-    <img src="assets/top/hl.png" alt="Headline" class="headline" id="hl">
+
+    <div class="headline-wrapper">
+      <div class="line-mask line-1" id="line1">
+        <img src="assets/top/hl.png" alt="Headline line 1">
+      </div>
+      <div class="line-mask line-2" id="line2">
+        <img src="assets/top/hl.png" alt="Headline line 2">
+      </div>
+      <div class="line-mask line-3" id="line3">
+        <img src="assets/top/hl.png" alt="Headline line 3">
+      </div>
+    </div>
   </div>
 
   <script>
-    // Standardowa obsługa clickTag
     const clickTag = window.clickTag || 'https://example.com/landing';
     document.getElementById('ad').addEventListener('click', () => {
       window.open(clickTag, '_blank');
@@ -74,24 +119,31 @@
       const tl = gsap.timeline({ paused: true });
 
       if (prefersReducedMotion) {
-        gsap.set(['#bg', '#hl'], { opacity: 1, scale: 1 });
+        gsap.set(['#bg', '#line1', '#line2', '#line3'], { opacity: 1, y: 0, scale: 1 });
         return tl;
       }
 
-      // Intro animacji (2.5s)
+      // 1. Tło wjeżdża płynnie
       tl.fromTo('#bg', 
-        { scale: 1.08, opacity: 0.8 }, 
-        { scale: 1.0, opacity: 1, duration: 2.5, ease: 'power2.out' }
+        { scale: 1.05, opacity: 0.8 }, 
+        { scale: 1.0, opacity: 1, duration: 2.2, ease: 'power2.out' }
       )
-      .fromTo('#hl',
-        { opacity: 0, y: 15, scale: 0.96 },
-        { opacity: 1, y: 0, scale: 1, duration: 1.8, ease: 'power3.out' },
-        '-=1.5'
+      // 2. Hasło buduje się linijka po linijce
+      .fromTo(['#line1', '#line2', '#line3'],
+        { opacity: 0, y: 15 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          duration: 0.7, 
+          stagger: 0.25, 
+          ease: 'power3.out' 
+        },
+        '-=1.2'
       )
-      // Dyskretny, powolny ruch tła mieszczący się w limicie 30 sekund
+      // 3. Spokojne podtrzymanie ruchu do 30 sekund
       .to('#bg', {
-        scale: 1.03,
-        duration: 15,
+        scale: 1.02,
+        duration: 14,
         repeat: 1,
         yoyo: true,
         ease: 'sine.inOut'
@@ -102,14 +154,12 @@
 
     const mainTimeline = buildTimeline();
 
-    // Reakcja na sygnał synchronizacji z preview.html
     window.addEventListener('message', (event) => {
       if (event.data && event.data.action === 'START_ANIMATION') {
         mainTimeline.restart();
       }
     });
 
-    // Start w przypadku otwarcia pliku bezpośrednio
     if (window.self === window.top) {
       mainTimeline.play();
     }
