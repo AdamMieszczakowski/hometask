@@ -144,7 +144,7 @@ html, body {
   transform-origin: bottom center;
 }
 
-/* EKRANY KOŃCOWE (02-fail & 03-win) – powiększona chmurka i wyśrodkowany układ */
+/* EKRANY KOŃCOWE (02-fail & 03-win) */
 .endcard {
   background-color: #0b1a2d;
   justify-content: flex-start;

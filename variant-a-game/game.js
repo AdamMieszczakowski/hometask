@@ -13,7 +13,7 @@ document.querySelectorAll('.btn-cta').forEach(btn => {
 });
 
 /* =======================================================
-   2. KONTROLER AUDIO
+   2. KONTROLER AUDIO I PAUZA PRZY ZMIANIE KARTY
    ======================================================= */
 let isMuted = false;
 let audioUnlocked = false;
@@ -59,12 +59,23 @@ muteBtn.addEventListener('click', (e) => {
   }
 });
 
+// Wymóg #8: zatrzymanie pętli gry i dźwięku po opuszczeniu karty
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
-    if (!isMuted) sounds.bgm.pause();
+    if (gameState === 'PLAYING') {
+      if (!isMuted) sounds.bgm.pause();
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    }
   } else {
-    if (!isMuted && gameState === 'PLAYING') {
-      sounds.bgm.play().catch(() => {});
+    if (gameState === 'PLAYING') {
+      lastTimestamp = performance.now(); // reset delty czasu, aby uniknąć przeskoku gracza
+      if (!isMuted) sounds.bgm.play().catch(() => {});
+      if (!animationFrameId) {
+        animationFrameId = requestAnimationFrame(gameLoop);
+      }
     }
   }
 });
@@ -247,6 +258,11 @@ document.getElementById('btn-replay').addEventListener('click', (e) => {
   startRun();
 });
 
+document.getElementById('btn-replay-win')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  startRun();
+});
+
 /* =======================================================
    5. PĘTLA RENDEROWANIA I DETEKCJA KOLIZJI
    ======================================================= */
@@ -346,13 +362,13 @@ function renderScene() {
     ctx.globalAlpha = 1.0;
   }
 
-  // 2. Korytarz jelita (gameplay.png) z wycięciem mikromarginesu (eliminuje czarną kreskę)
+  // 2. Korytarz jelita (gameplay.png) z odbiciem lustrzanym (ping-pong)
   if (loadedImages.gameplayGut) {
     const gutImg = loadedImages.gameplayGut;
     const nw = gutImg.naturalWidth || 720;
     const nh = gutImg.naturalHeight || 380;
     
-    const cropX = 2; // Odcięcie 2px z lewej i prawej strony
+    const cropX = 2; // Odcięcie 2px z krawędzi eliminuje widoczny szew
     const sWidth = nw - cropX * 2;
     const aspect = sWidth / nh;
 
@@ -436,7 +452,10 @@ function renderScene() {
    ======================================================= */
 function triggerGameOver(isWin) {
   gameState = isWin ? 'WIN' : 'FAIL';
-  cancelAnimationFrame(animationFrameId);
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
   sounds.bgm.pause();
   document.getElementById('hud-score').style.opacity = '0';
 
@@ -496,6 +515,10 @@ function showWinEndcard() {
   gsap.fromTo('#win-cta', 
     { scale: 0.85, opacity: 0 }, 
     { scale: 1, opacity: 1, duration: 0.5, delay: 0.4, ease: "back.out(1.8)" }
+  );
+  gsap.fromTo('#btn-replay-win', 
+    { opacity: 0, y: 10 }, 
+    { opacity: 1, y: 0, duration: 0.4, delay: 0.55, ease: "power1.out" }
   );
 
   gsap.to('#win-cta', {
